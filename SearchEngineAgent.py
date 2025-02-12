@@ -15,19 +15,29 @@ load_dotenv()
 
 LangSmith_Api_Key = os.getenv("LANG_SMITH_API_KEY")
 LangSmith_Tracing = os.getenv("LANGSMITH_TRACING")
-Tivaly_Api_Key = os.getenv("TIVALY_API_KEY")
+Tavily_Api_Key = os.getenv("TAVILY_API_KEY")
+
+# Kontrollera att API-nycklarna är laddade korrekt
+if not LangSmith_Api_Key:
+    raise ValueError("LANG_SMITH_API_KEY is not set in the environment variables.")
+if not Tavily_Api_Key:
+    raise ValueError("TIVALY_API_KEY is not set in the environment variables.")
 
 # Initialize LangSmith tracing here
-if LangSmith_tracing == "true":
-    print("LangSmith tracing is enabled.")
+if LangSmith_Tracing == "true":
+    print("LangSmith tracing is enabled.\n")
 
-# TavilySearchTool
-Search = TavilySearchResults(max_results=5)
-UserInput = input("What would you like to search for? ")
-SearchResults = Search.invoke(UserInput)
-print(SearchResults)
+try:
+    # TavilySearchTool
+    search = TavilySearchResults(api_key=Tavily_Api_Key, max_results=2)
+    UserInput = input("What would you like to search for? ")
+    SearchResults = search.invoke(UserInput)
+    print("\n",SearchResults)
+except Exception as e:
+    print(f"An error occurred: {e}")
+
 # If we want, we can create other tools. Once we have all the tools we want, 
 # we can put them in a list that we will reference later.
-Tools = [Search]
+tools = [search]
 
 
