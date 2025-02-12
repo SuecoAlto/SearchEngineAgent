@@ -13,8 +13,8 @@ from langchain_community.tools.tavily_search import TavilySearchResults # Tavily
 
 load_dotenv()
 
-LangSmith_Api_Key = os.getenv("LANG_SMITH_API_KEY")
 LangSmith_Tracing = os.getenv("LANGSMITH_TRACING")
+LangSmith_Api_Key = os.getenv("LANGSMITH_API_KEY")
 Tavily_Api_Key = os.getenv("TAVILY_API_KEY")
 
 # Kontrollera att API-nycklarna är laddade korrekt
@@ -29,15 +29,15 @@ if LangSmith_Tracing == "true":
 
 try:
     # TavilySearchTool
-    search = TavilySearchResults(api_key=Tavily_Api_Key, max_results=2)
+    Search = TavilySearchResults(Api_Key=Tavily_Api_Key, max_results=2)
     UserInput = input("What would you like to search for? ")
-    SearchResults = search.invoke(UserInput)
+    SearchResults = Search.invoke(UserInput)
     print("\n",SearchResults)
 except Exception as e:
     print(f"An error occurred: {e}")
 
 # If we want, we can create other tools. Once we have all the tools we want, 
 # we can put them in a list that we will reference later.
-tools = [search]
+tools = [Search]
 
 
