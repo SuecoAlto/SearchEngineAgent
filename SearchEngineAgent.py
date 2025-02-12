@@ -13,5 +13,10 @@ import os
 load_dotenv()
 
 LangSmith_api_key = os.getenv("LANG_SMITH_API_KEY")
+LangSmith_tracing = os.getenv("LANGSMITH_TRACING")
 Tivaly_api_key = os.getenv("TIVALY_API_KEY")
+
+# Initialize LangSmith tracing here
+if LangSmith_tracing == "true":
+    print("LangSmith tracing is enabled.")
 
