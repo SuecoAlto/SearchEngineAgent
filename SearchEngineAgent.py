@@ -17,6 +17,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults # Tavily
 from langchain.chat_models import init_chat_model # For the chat model
 from langchain_core.messages import HumanMessage # For the human message in LLM
 from langgraph.prebuilt import create_react_agent # For the creation of an agent
+from langgraph.checkpoint.memory import MemorySaver # For the memory of the agent
 
 load_dotenv()
 
@@ -53,6 +54,7 @@ try:
     print(json.dumps(Search_Respons, indent=2, sort_keys=True))
 except Exception as e:
     print(f"An error occurred: {e}")
+    
 # If we want, we can create other tools. we can put them in a list that we will reference later.
 Tools = [Search_Tool]
 
@@ -79,6 +81,15 @@ Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=User_S
 # print("\nAgent Response:")
 # print(Agent_Response)
 
+
+for chunk in Agent_Executor.stream(
+    {"messages": [HumanMessage(content=User_Search_Input)]}
+):
+    print("\n The stream back messages as they occur. \n")
+    print(chunk)
+    print("----")
+
+
 # Print the agent response in a human-readable form
 response_text = ""
 if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
@@ -88,4 +99,7 @@ if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
                 response_text += message.content + "\n"
 
 print("\n Agent:\n", response_text)
+
+# Making the agent statfull by saving the agent state, this will alow the agent to remember the context of the conversation. 
+# Agenta are statless by default
 
