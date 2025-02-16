@@ -16,7 +16,7 @@ import asyncio
 # Tools and models
 from langchain_community.tools.tavily_search import TavilySearchResults # TavilySearchTool
 from langchain.chat_models import init_chat_model # For the chat model
-from langchain_core.messages import HumanMessage # For the human message in LLM
+from langchain_core.messages import HumanMessage, AIMessage # For the human message in LLM
 from langgraph.prebuilt import create_react_agent # For the creation of an agent
 from langgraph.checkpoint.memory import MemorySaver # For saving the agent state in memory
 
@@ -34,8 +34,7 @@ if not LangSmith_Api_Key:
     raise ValueError("LANG_SMITH_API_KEY is not set in the environment variables.")
 if not Tavily_Api_Key:
     raise ValueError("TAVILY_API_KEY is not set in the environment variables.")
-
-# If the OpenAI API key is not set in the environment variables, the user will be prompted to enter it
+# If the OpenAI API key is not set in the environment variables, the user will  beprompted to enter it
 if not os.environ.get("OPENAI_API_KEY"):
     os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter your OpenAI API key: ")
 
@@ -46,54 +45,48 @@ else:
     print("LangSmith tracing is disabled.\n")
 
 # TavilySearchTool
-try:
-    Search_Tool = TavilySearchResults(tavily_api_key=Tavily_Api_Key, max_results=2)
-    User_Search_Input = input("What would you like to search for? ")
-    # Execute the search
-    Search_Respons = Search_Tool.invoke(User_Search_Input)
-    # Print the search results readably 
-    print("\n\n***Search Results***\n")
-    print(json.dumps(Search_Respons, indent=2, sort_keys=True))
-    print("------------------------ \n")
-except Exception as e:
-    print(f"An error occurred: {e}")
-    
+Search_Tool = TavilySearchResults(tavily_api_key=Tavily_Api_Key, max_results=2)
+Model = init_chat_model("gpt-3.5-turbo", model_provider="openai")
+
 # If we want, we can create other tools. we can put them in a list that we will reference later.
 Tools = [Search_Tool]
-
-# Initializing Language Models
-Model = init_chat_model("gpt-3.5-turbo", model_provider="openai")
 
 # Now we can use the model to interact with the tools
 # This is done by binding the tools to the model
 Model_With_Tools = Model.bind_tools(Tools)
-# The user search input is the content of the human message
-# content is how we interact with the model, HumanMessage enables human-like interaction
-Response = Model_With_Tools.invoke([HumanMessage(content=User_Search_Input)])
-# print("\nLLM Response (with tools binding):")
-# print(Response.content)
 
-# Create and run the agent using LangGraph
+# Create agent memory
 Memory = MemorySaver()
 
+# Create and run the agent using LangGraph
 Agent_Executor = create_react_agent(Model, Tools, checkpointer=Memory)
 
 config = {
-    "run_name": "SEARCH_AGENT", "configurable": {
-        "thread_id": "abc123", "checkpoint_ns":"namespace", "checkpoint_id":"checkpoint1"
-        }
-        }
+    "run_name": "SEARCH_AGENT",
+    "configurable": {
+    "thread_id": "abc123",
+    "checkpoint_ns":"namespace",
+    "checkpoint_id":"checkpoint1"}
+    }
 
-# Making the agent stateful by saving the agent state, this will allow the agent to remember the context of the conversation. 
-# Agents are stateless by default
+Search_History = []
 
+User_Search_Input = input("What would you like to search for? ")
+Search_History.append(User_Search_Input)
 
-# Run the agent
-Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=User_Search_Input)]}, config=config)
+# Execute the search
+try:
+    Search_Respons = Search_Tool.invoke(User_Search_Input)
 
+    # Print the search results readably 
+    print("\n\n***Search Results***\n")
+    print(json.dumps(Search_Respons, indent=2, sort_keys=True))
+    print("------------------------ \n")
 
-# Message stream
-# Stream the agent response for real-time interaction - Stream the agent response as it occurs in blocks as it occurs
+except Exception as e:
+    print(f"An error occurred: {e}")
+    exit()
+    
 
 print("\n***The message stream as they occur***\n")
 
@@ -102,7 +95,6 @@ for Chunk in Agent_Executor.stream(
 ):
     print(Chunk)
     print("------------------------ \n")
-
 
 #Token Stream
 # Stream the agent response as tokens for real-time interaction - The stream agent respons line by line as it occurs
@@ -142,15 +134,63 @@ async def stream_tokens():
 print("-------------1-----------\n")
 
 asyncio.run(stream_tokens())
+# Initializing Language Models
 
-# Print the agent response in a human-readable form
-response_text = ""
+# Run the agent
+Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=str(Search_Respons))]}, config=config)
+
+# Continuous chat loop with the LLM (Agent memory is retained)
+# Print response
+Response_Text = ""
 if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
     for message in Agent_Response["messages"]:
-        # Vi antar att AI-meddelandet är av typen AIMessage
-        if message.__class__.__name__ == "AIMessage":
-            response_text += message.content
+        if isinstance(message, AIMessage):
+            Response_Text += message.content
 
-print("\n\n***Agent+LLM***\n", response_text)
+
+# The user search input is the content of the human message
+# content is how we interact with the model, HumanMessage enables human-like interaction
+
+#######
+print("\n\n***Agent+LLM Initial Response***\n", Response_Text)
+
+# Add user message to conversation history
+Conversation_History = [
+    HumanMessage(content=User_Search_Input),
+    AIMessage(content=Response_Text)
+    ]
+
+
+
+print("\nYou can now chat with the LLM. Type 'exit' to stop.")
+
+while True:
+    user_input = input("\nYou: ")
+    
+    if user_input.lower() in ["exit", "quit"]:
+        print("Ending conversation...")
+        break
+
+    Conversation_History.append(HumanMessage(content=user_input))
+
+    if "search" in user_input.lower() and "before" in user_input.lower():
+        Response_Text = f"Your previous searches were: {', '.join(Search_History)}"
+    else:
+        #  **Kör agenten med uppdaterad historik**
+        Agent_Response = Agent_Executor.invoke({"messages": Conversation_History}, config=config)
+
+        #  **Hämta och spara svaret från LLM**
+        Response_Text = ""
+        if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
+            for message in Agent_Response["messages"]:
+                if isinstance(message, AIMessage):
+                    Response_Text = message.content
+
+
+    # **Spara svaret i konversationshistoriken**
+    Conversation_History.append(AIMessage(content=Response_Text))
+
+    # **Skriv ut LLM:s svar**
+    print("\nAgent:", Response_Text)
 
 
