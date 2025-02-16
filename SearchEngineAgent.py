@@ -152,7 +152,6 @@ if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
 # content is how we interact with the model, HumanMessage enables human-like interaction
 
 #######
-print("\n\n***Agent+LLM Initial Response***\n", Response_Text)
 
 # Add user message to conversation history
 Conversation_History = [
@@ -161,36 +160,49 @@ Conversation_History = [
     ]
 
 
+async def Stream_Agent_Response(Conversation_History):
+    Response_Text = ""
 
-print("\nYou can now chat with the LLM. Type 'exit' to stop.")
+    async for Event in Agent_Executor.astream_events({"messages": Conversation_History}, version="v1", config=config):
+        Kind = Event["event"]
 
-while True:
-    user_input = input("\nYou: ")
-    
-    if user_input.lower() in ["exit", "quit"]:
-        print("Ending conversation...")
-        break
+        if Kind == "on_chat_model_stream":
+            content = Event["data"]["chunk"].content
+            if content:
+                print(content, end="", flush=True)
+                Response_Text += content
+    return Response_Text
 
-    Conversation_History.append(HumanMessage(content=user_input))
-
-    if "search" in user_input.lower() and "before" in user_input.lower():
-        Response_Text = f"Your previous searches were: {', '.join(Search_History)}"
-    else:
-        #  **Kör agenten med uppdaterad historik**
-        Agent_Response = Agent_Executor.invoke({"messages": Conversation_History}, config=config)
-
-        #  **Hämta och spara svaret från LLM**
-        Response_Text = ""
-        if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
-            for message in Agent_Response["messages"]:
-                if isinstance(message, AIMessage):
-                    Response_Text = message.content
+async def Initial_Agent_Response():
+    print("\n\n***Agent+LLM Initial Response***\n", end="", flush=True)
 
 
-    # **Spara svaret i konversationshistoriken**
+    Response_Text = await Stream_Agent_Response([HumanMessage(content=User_Search_Input)])
+    Conversation_History.append(HumanMessage(content=User_Search_Input))
     Conversation_History.append(AIMessage(content=Response_Text))
 
-    # **Skriv ut LLM:s svar**
-    print("\nAgent:", Response_Text)
 
+async def Chat_Loop():
+    """Main chat loop for user interaction."""
+    print("\n\nYou can now chat with the LLM. Type 'exit' to stop.")
 
+    while True:
+        user_input = input("\n\nYou: ")
+
+        if user_input.lower() in ["exit", "quit"]:
+            print("Ending conversation...")
+            break
+
+        # Store user input
+        Conversation_History.append(HumanMessage(content=user_input))
+
+        Response_Text = await Stream_Agent_Response(Conversation_History)
+
+        # Store AI response
+        Conversation_History.append(AIMessage(content=Response_Text))
+
+async def Main():
+    await Initial_Agent_Response()  # Streama initiala svaret
+    await Chat_Loop()  # Starta chatten
+
+asyncio.run(Main())
