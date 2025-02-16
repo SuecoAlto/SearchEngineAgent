@@ -18,18 +18,20 @@ This project implements an **AI-powered search and chat agent** using **LangChai
 ## 🛠️ Installation & Setup
 
 1️⃣ Clone the Repository
+
 ```sh
 git clone https://github.com/your-username/your-repository.git
 cd your-repository
 ```
 
-
 2️⃣ Install Dependencies
+
 ```
 pip install -r requirements.txt
-````
+```
 
 3️⃣ Set Up Environment Variables
+
 ```
 Create a .env file and add your API keys:
 
@@ -40,11 +42,13 @@ OPENAI_API_KEY=your-openai-api-key
 ```
 
 4️⃣ Run the Chatbot
+
 ```
 python SearchEngineAgent.py
-````
+```
 
-⚡ Usage
+## ⚡ Usage
+
 ```
 	1.	Start the script and enter your search query.
 	2.	The agent fetches search results and returns real-time data.
@@ -53,28 +57,35 @@ python SearchEngineAgent.py
 	5.	Type "exit" to terminate the session.
 ```
 
-#📂 Project Structure
+## 📂 Project Structure
+
 ```
 📂 project-folder
 │-- SearchEngineAgent.py  # Main script
 │-- .env                  # Environment variables (ignored in Git)
 │-- requirements.txt       # Python dependencies
 │-- README.md              # This file
-````
-
-#🛠️ Built With
-```
-	•	LangChain - Framework for building LLM applications.
-	•	LangGraph - Agent execution framework.
-	•	Tavily Search - Real-time search API.
-	•	OpenAI API - LLM-powered chat agent.
-	•	Python - Main programming language.
 ```
 
-#🔮 Future Improvements
+---
+
+## 🛠️ Built With
+
+- **LangChain** - Framework for building LLM applications.
+- **LangGraph** - Agent execution framework.
+- **Tavily Search** - Real-time search API.
+- **OpenAI API** - LLM-powered chat agent.
+- **Python** - Main programming language.
+
+---
+
+## 🔮 Future Improvements
+
+- **Enhanced Search Capabilities** (support for multiple sources).
+- **Integration with More LLMs** (GPT-4, Claude, etc.).
+- **Custom User Profiles & Memory Handling**.
+- **Web-Based Frontend Interface**.
+
 ```
-	•	✅ Enhanced Search Capabilities (support for multiple sources).
-	•	✅ Integration with More LLMs (GPT-4, Claude, etc.).
-	•	✅ Custom User Profiles & Memory Handling.
-	•	✅ Web-Based Frontend Interface.
+
 ```
