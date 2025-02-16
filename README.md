@@ -17,15 +17,15 @@ This project implements an **AI-powered search and chat agent** using **LangChai
 
 ## 🛠️ Installation & Setup
 
-### 1️⃣ Clone the Repository
+#### 1️⃣ Clone the Repository
 ```sh
 git clone https://github.com/your-username/your-repository.git
 cd your-repository
 ```
 
-```
-2️⃣ Install Dependencies
 
+2️⃣ Install Dependencies
+```
 pip install -r requirements.txt
 ````
 
