@@ -53,23 +53,28 @@ python SearchEngineAgent.py
 	5.	Type "exit" to terminate the session.
 ```
 
-##📂 Project Structure
-
+#📂 Project Structure
+```
 📂 project-folder
 │-- SearchEngineAgent.py  # Main script
 │-- .env                  # Environment variables (ignored in Git)
 │-- requirements.txt       # Python dependencies
 │-- README.md              # This file
+````
 
-🛠️ Built With
+#🛠️ Built With
+```
 	•	LangChain - Framework for building LLM applications.
 	•	LangGraph - Agent execution framework.
 	•	Tavily Search - Real-time search API.
 	•	OpenAI API - LLM-powered chat agent.
 	•	Python - Main programming language.
+```
 
-🔮 Future Improvements
+#🔮 Future Improvements
+```
 	•	✅ Enhanced Search Capabilities (support for multiple sources).
 	•	✅ Integration with More LLMs (GPT-4, Claude, etc.).
 	•	✅ Custom User Profiles & Memory Handling.
 	•	✅ Web-Based Frontend Interface.
+```
