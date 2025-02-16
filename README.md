@@ -17,14 +17,15 @@ This project implements an **AI-powered search and chat agent** using **LangChai
 
 ## 🛠️ Installation & Setup
 
-### 1️⃣ Clone the Repository
+## 1️⃣ Clone the Repository
 ```sh
 git clone https://github.com/your-username/your-repository.git
 cd your-repository
 
 2️⃣ Install Dependencies
-
+```
 pip install -r requirements.txt
+````
 
 3️⃣ Set Up Environment Variables
 
@@ -34,8 +35,9 @@ LANGSMITH_TRACING=true  # Set to false if debugging is not needed
 LANGSMITH_API_KEY=your-langsmith-api-key
 TAVILY_API_KEY=your-tavily-api-key
 OPENAI_API_KEY=your-openai-api-key
+```
 
-###4️⃣ Run the Chatbot
+## 4️⃣ Run the Chatbot
 
 python SearchEngineAgent.py
 
@@ -46,7 +48,7 @@ python SearchEngineAgent.py
 	4.	Chat history is stored, and you can ask about previous searches.
 	5.	Type "exit" to terminate the session.
 
-###📂 Project Structure
+##📂 Project Structure
 
 📂 project-folder
 │-- SearchEngineAgent.py  # Main script
