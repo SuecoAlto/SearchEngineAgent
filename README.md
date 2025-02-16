@@ -35,7 +35,7 @@ LANGSMITH_API_KEY=your-langsmith-api-key
 TAVILY_API_KEY=your-tavily-api-key
 OPENAI_API_KEY=your-openai-api-key
 
-4️⃣ Run the Chatbot
+###4️⃣ Run the Chatbot
 
 python SearchEngineAgent.py
 
@@ -46,7 +46,7 @@ python SearchEngineAgent.py
 	4.	Chat history is stored, and you can ask about previous searches.
 	5.	Type "exit" to terminate the session.
 
-📂 Project Structure
+###📂 Project Structure
 
 📂 project-folder
 │-- SearchEngineAgent.py  # Main script
@@ -66,26 +66,3 @@ python SearchEngineAgent.py
 	•	✅ Integration with More LLMs (GPT-4, Claude, etc.).
 	•	✅ Custom User Profiles & Memory Handling.
 	•	✅ Web-Based Frontend Interface.
-
-📝 License
-
-This project is open-source under the MIT License.
-
-🤝 Contributing
-
-Want to improve this project? Feel free to fork the repo and submit a pull request! 🚀
-
-📞 Contact
-
-For inquiries, contact your-email@example.com or visit your GitHub profile.
-
----
-
-### 🔹 **Why is this README good?**
-- ✅ **Clear project introduction**
-- ✅ **Step-by-step setup guide**
-- ✅ **Explains features & technologies**
-- ✅ **Future improvements section**
-- ✅ **Encourages contributions**
-
-This README ensures **any developer can quickly understand and run your project**! 🚀💡
