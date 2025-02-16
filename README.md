@@ -45,11 +45,13 @@ python SearchEngineAgent.py
 ````
 
 ⚡ Usage
+```
 	1.	Start the script and enter your search query.
 	2.	The agent fetches search results and returns real-time data.
 	3.	Engage in a conversation with the LLM-powered assistant.
 	4.	Chat history is stored, and you can ask about previous searches.
 	5.	Type "exit" to terminate the session.
+```
 
 ##📂 Project Structure
 
