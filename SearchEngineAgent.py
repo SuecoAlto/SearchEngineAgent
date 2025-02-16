@@ -18,7 +18,8 @@ from langchain_community.tools.tavily_search import TavilySearchResults # Tavily
 from langchain.chat_models import init_chat_model # For the chat model
 from langchain_core.messages import HumanMessage # For the human message in LLM
 from langgraph.prebuilt import create_react_agent # For the creation of an agent
-from langgraph.checkpoint.memory import MemorySaver # For the memory of the agent
+from langgraph.checkpoint.memory import MemorySaver # For saving the agent state in memory
+
 
 load_dotenv()
 
@@ -73,10 +74,22 @@ Response = Model_With_Tools.invoke([HumanMessage(content=User_Search_Input)])
 # print(Response.content)
 
 # Create and run the agent using LangGraph
-Agent_Executor = create_react_agent(Model, Tools).with_config({"run_name": "SEARCH_AGENT"})
+Memory = MemorySaver()
+
+Agent_Executor = create_react_agent(Model, Tools, checkpointer=Memory)
+
+config = {
+    "run_name": "SEARCH_AGENT", "configurable": {
+        "thread_id": "abc123", "checkpoint_ns":"namespace", "checkpoint_id":"checkpoint1"
+        }
+        }
+
+# Making the agent stateful by saving the agent state, this will allow the agent to remember the context of the conversation. 
+# Agents are stateless by default
+
 
 # Run the agent
-Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=User_Search_Input)]})
+Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=User_Search_Input)]}, config=config)
 
 
 # Message stream
@@ -85,7 +98,7 @@ Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=User_S
 print("\n***The message stream as they occur***\n")
 
 for Chunk in Agent_Executor.stream(
-    {"messages": [HumanMessage(content=User_Search_Input)]}
+    {"messages": [HumanMessage(content=User_Search_Input)]}, config=config
 ):
     print(Chunk)
     print("------------------------ \n")
@@ -99,7 +112,7 @@ print("\n***The token stream as they occur***\n")
 async def stream_tokens():
 
     async for Event in Agent_Executor.astream_events(
-        {"messages": [HumanMessage(content=User_Search_Input)]}, version="v1"
+        {"messages": [HumanMessage(content=User_Search_Input)]}, version="v1", config=config
     ):
         Kind = Event["event"]
         
@@ -140,5 +153,4 @@ if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
 
 print("\n\n***Agent+LLM***\n", response_text)
 
-# Making the agent stateful by saving the agent state, this will allow the agent to remember the context of the conversation. 
-# Agents are stateless by default
+
