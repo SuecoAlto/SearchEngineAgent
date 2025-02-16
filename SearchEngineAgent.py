@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import os
 import getpass # For the llm api key, if not set corectly in the .env file, the user will be prompted to enter it in the terminal
 import json
+import asyncio
 
 # Tools and models
 from langchain_community.tools.tavily_search import TavilySearchResults # TavilySearchTool
@@ -39,67 +40,105 @@ if not os.environ.get("OPENAI_API_KEY"):
 
 # If LangSmith tracing is enabled, print a message
 if LangSmith_Tracing == "true":
-	print("LangSmith tracing is enabled.\n")
+    print("LangSmith tracing is enabled.\n")
 else:
-	print("LangSmith tracing is disabled.\n")
+    print("LangSmith tracing is disabled.\n")
 
 # TavilySearchTool
 try:
-    Search_Tool = TavilySearchResults(Api_Key=Tavily_Api_Key, max_results=2)
+    Search_Tool = TavilySearchResults(tavily_api_key=Tavily_Api_Key, max_results=2)
     User_Search_Input = input("What would you like to search for? ")
-    # Ececute the search
+    # Execute the search
     Search_Respons = Search_Tool.invoke(User_Search_Input)
     # Print the search results readably 
-    print("\n Search Results: \n")
+    print("\n\n***Search Results***\n")
     print(json.dumps(Search_Respons, indent=2, sort_keys=True))
+    print("------------------------ \n")
 except Exception as e:
     print(f"An error occurred: {e}")
     
 # If we want, we can create other tools. we can put them in a list that we will reference later.
 Tools = [Search_Tool]
 
-#Initializing Language Models
+# Initializing Language Models
 Model = init_chat_model("gpt-3.5-turbo", model_provider="openai")
 
 # Now we can use the model to interact with the tools
 # This is done by binding the tools to the model
 Model_With_Tools = Model.bind_tools(Tools)
 # The user search input is the content of the human message
-# contetnt is how we interact with the model, HumanMessage enables human-like interaction
+# content is how we interact with the model, HumanMessage enables human-like interaction
 Response = Model_With_Tools.invoke([HumanMessage(content=User_Search_Input)])
 # print("\nLLM Response (with tools binding):")
 # print(Response.content)
 
-
-#Create and run the the agent using LangGraph
-Agent_Executor = create_react_agent(Model, Tools)
+# Create and run the agent using LangGraph
+Agent_Executor = create_react_agent(Model, Tools).with_config({"run_name": "SEARCH_AGENT"})
 
 # Run the agent
 Agent_Response = Agent_Executor.invoke({"messages": [HumanMessage(content=User_Search_Input)]})
 
-# Print the agent response in raw form
-# print("\nAgent Response:")
-# print(Agent_Response)
 
+# Message stream
+# Stream the agent response for real-time interaction - Stream the agent response as it occurs in blocks as it occurs
 
-for chunk in Agent_Executor.stream(
+print("\n***The message stream as they occur***\n")
+
+for Chunk in Agent_Executor.stream(
     {"messages": [HumanMessage(content=User_Search_Input)]}
 ):
-    print("\n The stream back messages as they occur. \n")
-    print(chunk)
-    print("----")
+    print(Chunk)
+    print("------------------------ \n")
 
+
+#Token Stream
+# Stream the agent response as tokens for real-time interaction - The stream agent respons line by line as it occurs
+
+print("\n***The token stream as they occur***\n")
+
+async def stream_tokens():
+
+    async for Event in Agent_Executor.astream_events(
+        {"messages": [HumanMessage(content=User_Search_Input)]}, version="v1"
+    ):
+        Kind = Event["event"]
+        
+        if Kind == "on_chain_start":
+            if (Event["name"] == "agent"):
+                print(f"Starting agent {Event['name']} with input {Event ['data'].get('input')}, \n\nTokens:\n")
+
+        elif Kind == "on_chain_end":
+            if (Event["name"] == "agent"):
+                output_data = Event["data"].get("output", {})
+                print(f"Done agent: {Event['name']} with output: {output_data.get('output', 'No output available')}")
+
+        elif Kind == "on_chat_model_stream":
+            content = Event["data"]["chunk"].content
+            if content:
+                print(content, end="|")
+        
+        elif Kind == "on_tool_start":
+            print("\n-------------2-----------\n")
+            print(f"Starting tool: {Event['name']} with inputs: {Event['data'].get('input')}")
+
+        elif Kind == "on_tool_end":
+            print(f"\nDone tool: {Event['name']}")
+            print("\n-------------3-----------\n")
+            print(f"Tool output was:\n{Event['data'].get('output')}")
+
+print("-------------1-----------\n")
+
+asyncio.run(stream_tokens())
 
 # Print the agent response in a human-readable form
 response_text = ""
 if isinstance(Agent_Response, dict) and "messages" in Agent_Response:
-        for message in Agent_Response["messages"]:
-            # Vi antar att AI-meddelandet är av typen AIMessage
-            if message.__class__.__name__ == "AIMessage":
-                response_text += message.content + "\n"
+    for message in Agent_Response["messages"]:
+        # Vi antar att AI-meddelandet är av typen AIMessage
+        if message.__class__.__name__ == "AIMessage":
+            response_text += message.content
 
-print("\n Agent:\n", response_text)
+print("\n\n***Agent+LLM***\n", response_text)
 
-# Making the agent statfull by saving the agent state, this will alow the agent to remember the context of the conversation. 
-# Agenta are statless by default
-
+# Making the agent stateful by saving the agent state, this will allow the agent to remember the context of the conversation. 
+# Agents are stateless by default
